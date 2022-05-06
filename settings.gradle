@@ -1,0 +1,3 @@
+rootProject.name = 'aeplugin-shelly'
+
+includeBuild "../automate-everything"
