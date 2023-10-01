@@ -15,28 +15,43 @@
 
 package eu.automateeverything.shellyplugin.ports
 
+import eu.automateeverything.domain.events.EventBus
 import eu.automateeverything.domain.hardware.BinaryInput
-import eu.automateeverything.shellyplugin.StateBriefDto
+import eu.automateeverything.domain.hardware.PortCapabilities
+import eu.automateeverything.shellyplugin.AccelBriefDto
 
-class ShellyStateInputPort(
-    id: String,
-    shellyId: String,
+class ShellyVibrationPort(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
     sleepInterval: Long,
-    lastSeenTimestamp: Long
-) : ShellyInputPort<BinaryInput>(id, BinaryInput::class.java, sleepInterval, lastSeenTimestamp) {
+    lastSeenTimestamp: Long,
+    shellyId: String
+) :
+    ShellyPort<BinaryInput>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        BinaryInput::class.java,
+        PortCapabilities(canRead = true, canWrite = false),
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     private var value = BinaryInput(false)
-    override val readTopics = arrayOf("shellies/$shellyId/sensor/state")
+    override val readTopics = arrayOf("shellies/$shellyId/sensor/vibration")
 
-    override fun read(): BinaryInput {
+    override fun readInternal(): BinaryInput {
         return value
     }
 
     override fun setValueFromMqttPayload(payload: String) {
-        value = BinaryInput(payload == "open")
+        value = BinaryInput(payload == "1")
     }
 
-    fun setValueFromStateResponse(stateBrief: StateBriefDto) {
-        value = BinaryInput(stateBrief.state == "open")
+    fun setValueFromAccelResponse(stateBrief: AccelBriefDto) {
+        value = BinaryInput(stateBrief.vibration == 1)
     }
 }

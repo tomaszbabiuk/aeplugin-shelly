@@ -15,21 +15,36 @@
 
 package eu.automateeverything.shellyplugin.ports
 
+import eu.automateeverything.domain.events.EventBus
 import eu.automateeverything.domain.hardware.BinaryInput
+import eu.automateeverything.domain.hardware.PortCapabilities
 import eu.automateeverything.shellyplugin.InputBriefDto
 
-class ShellyBinaryInputPort(
-    id: String,
-    shellyId: String,
-    channel: Int,
+class ShellyBinaryPort(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
     sleepInterval: Long,
-    lastSeenTimestamp: Long)
-    : ShellyInputPort<BinaryInput>(id, BinaryInput::class.java, sleepInterval, lastSeenTimestamp) {
+    lastSeenTimestamp: Long,
+    shellyId: String,
+    channel: Int
+) :
+    ShellyPort<BinaryInput>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        BinaryInput::class.java,
+        PortCapabilities(canRead = true, canWrite = false),
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     private var value = BinaryInput(false)
     override val readTopics = arrayOf("shellies/$shellyId/input/$channel")
 
-    override fun read(): BinaryInput {
+    override fun readInternal(): BinaryInput {
         return value
     }
 

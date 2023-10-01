@@ -15,21 +15,36 @@
 
 package eu.automateeverything.shellyplugin.ports
 
+import eu.automateeverything.domain.events.EventBus
 import eu.automateeverything.domain.hardware.Luminosity
+import eu.automateeverything.domain.hardware.PortCapabilities
 import eu.automateeverything.shellyplugin.LuminosityBriefDto
 import java.math.BigDecimal
 
-class ShellyLuminosityInputPort(
-        id: String,
-        shellyId: String,
-        sleepInterval: Long,
-        lastSeenTimestamp: Long
-) : ShellyInputPort<Luminosity>(id, Luminosity::class.java, sleepInterval, lastSeenTimestamp) {
+class ShellyLuminosityPort(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
+    sleepInterval: Long,
+    lastSeenTimestamp: Long,
+    shellyId: String
+) :
+    ShellyPort<Luminosity>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        Luminosity::class.java,
+        PortCapabilities(canRead = true, canWrite = false),
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     private var value = Luminosity(BigDecimal.ZERO)
     override val readTopics = arrayOf("shellies/$shellyId/sensor/lux")
 
-    override fun read(): Luminosity {
+    override fun readInternal(): Luminosity {
         return value
     }
 

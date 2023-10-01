@@ -15,21 +15,37 @@
 
 package eu.automateeverything.shellyplugin.ports
 
+import eu.automateeverything.domain.events.EventBus
+import eu.automateeverything.domain.hardware.PortCapabilities
 import eu.automateeverything.domain.hardware.Temperature
 import eu.automateeverything.shellyplugin.TemperatureBriefDto
 import java.math.BigDecimal
 
-class ShellyTemperatureInputPort(
-    id: String,
-    shellyId: String,
+class ShellyTemperaturePort(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
     sleepInterval: Long,
-    lastSeenTimestamp: Long
-) : ShellyInputPort<Temperature>(id, Temperature::class.java, sleepInterval, lastSeenTimestamp) {
+    lastSeenTimestamp: Long,
+    shellyId: String
+) :
+    ShellyPort<Temperature>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        Temperature::class.java,
+        PortCapabilities(canRead = true, canWrite = false),
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     private var value = Temperature(BigDecimal.ZERO)
-    override val readTopics = arrayOf("shellies/$shellyId/sensor/temperature", "shellies/$shellyId/temperature")
+    override val readTopics =
+        arrayOf("shellies/$shellyId/sensor/temperature", "shellies/$shellyId/temperature")
 
-    override fun read(): Temperature {
+    override fun readInternal(): Temperature {
         return value
     }
 

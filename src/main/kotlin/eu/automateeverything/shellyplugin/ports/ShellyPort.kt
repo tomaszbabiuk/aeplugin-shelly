@@ -16,26 +16,52 @@
 package eu.automateeverything.shellyplugin.ports
 
 import eu.automateeverything.data.hardware.PortValue
-import eu.automateeverything.domain.hardware.InputPort
-import eu.automateeverything.domain.hardware.OutputPort
+import eu.automateeverything.domain.events.EventBus
 import eu.automateeverything.domain.hardware.Port
+import eu.automateeverything.domain.hardware.PortCapabilities
 
-abstract class ShellyInputPort<V: PortValue>(
-    override val id : String,
-    override val valueClazz: Class<V>,
-    override val sleepInterval: Long,
-    override var lastSeenTimestamp: Long) : Port<V>, InputPort<V> {
+abstract class ShellyPort<V : PortValue>(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
+    valueClazz: Class<V>,
+    capabilities: PortCapabilities,
+    sleepInterval: Long,
+    lastSeenTimestamp: Long
+) : Port<V>(factoryId, adapterId, portId, eventBus, valueClazz, capabilities, sleepInterval) {
+
+    init {
+        updateLastSeenTimeStamp(lastSeenTimestamp)
+    }
 
     abstract val readTopics: Array<String>
+
     abstract fun setValueFromMqttPayload(payload: String)
 }
 
-abstract class ShellyOutputPort<V: PortValue>(
-    id : String,
+abstract class ShellyOutputPort<V : PortValue>(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
     valueClazz: Class<V>,
+    capabilities: PortCapabilities,
     sleepInterval: Long,
-    lastSeenTimestamp: Long) : ShellyInputPort<V>(id, valueClazz, sleepInterval, lastSeenTimestamp), OutputPort<V> {
+    lastSeenTimestamp: Long
+) :
+    ShellyPort<V>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        valueClazz,
+        capabilities,
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     abstract val writeTopic: String
+
     abstract fun getExecutePayload(): String?
 }

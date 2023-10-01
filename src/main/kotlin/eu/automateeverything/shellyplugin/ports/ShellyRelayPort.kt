@@ -15,32 +15,42 @@
 
 package eu.automateeverything.shellyplugin.ports
 
+import eu.automateeverything.domain.events.EventBus
+import eu.automateeverything.domain.hardware.PortCapabilities
 import eu.automateeverything.domain.hardware.Relay
 import eu.automateeverything.shellyplugin.RelayResponseDto
 import java.math.BigDecimal
 
-class ShellyRelayOutputPort(
-    id: String,
-    shellyId: String,
-    channel: Int,
+class ShellyRelayPort(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
     sleepInterval: Long,
-    lastSeenTimestamp: Long
-) : ShellyOutputPort<Relay>(id, Relay::class.java, sleepInterval, lastSeenTimestamp) {
+    lastSeenTimestamp: Long,
+    shellyId: String,
+    channel: Int
+) :
+    ShellyOutputPort<Relay>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        Relay::class.java,
+        PortCapabilities(canRead = true, canWrite = true),
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     private var readValue = Relay(false)
-    override var requestedValue : Relay? = null
     override val readTopics = arrayOf("shellies/$shellyId/relay/$channel")
     override val writeTopic = "shellies/$shellyId/relay/$channel/command"
 
-    override fun read(): Relay {
+    override fun readInternal(): Relay {
         if (requestedValue != null) {
             return requestedValue!!
         }
         return readValue
-    }
-
-    override fun write(value: Relay) {
-        this.requestedValue = value
     }
 
     override fun setValueFromMqttPayload(payload: String) {
@@ -57,9 +67,5 @@ class ShellyRelayOutputPort(
 
     fun setValueFromRelayResponse(response: RelayResponseDto) {
         readValue = Relay(if (response.ison) BigDecimal.ONE else BigDecimal.ZERO)
-    }
-
-    override fun reset() {
-        requestedValue = null
     }
 }

@@ -15,21 +15,36 @@
 
 package eu.automateeverything.shellyplugin.ports
 
+import eu.automateeverything.domain.events.EventBus
 import eu.automateeverything.domain.hardware.Humidity
+import eu.automateeverything.domain.hardware.PortCapabilities
 import eu.automateeverything.shellyplugin.HumidityBriefDto
 import java.math.BigDecimal
 
-class ShellyHumidityInputPort(
-        id: String,
-        shellyId: String,
-        sleepInterval: Long,
-        lastSeenTimestamp: Long
-) : ShellyInputPort<Humidity>(id, Humidity::class.java, sleepInterval, lastSeenTimestamp) {
+class ShellyHumidityPort(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
+    sleepInterval: Long,
+    lastSeenTimestamp: Long,
+    shellyId: String
+) :
+    ShellyPort<Humidity>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        Humidity::class.java,
+        PortCapabilities(canRead = true, canWrite = true),
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     private var value = Humidity(BigDecimal.ZERO)
     override val readTopics = arrayOf("shellies/$shellyId/sensor/humidity")
 
-    override fun read(): Humidity {
+    override fun readInternal(): Humidity {
         return value
     }
 

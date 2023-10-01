@@ -16,31 +16,41 @@
 package eu.automateeverything.shellyplugin.ports
 
 import com.google.gson.Gson
+import eu.automateeverything.domain.events.EventBus
+import eu.automateeverything.domain.hardware.PortCapabilities
 import eu.automateeverything.domain.hardware.PowerLevel
 import eu.automateeverything.shellyplugin.LightBriefDto
 import eu.automateeverything.shellyplugin.LightSetDto
 import java.math.BigDecimal
 
 class ShellyPowerLevelOutputPort(
-    id: String,
-    shellyId: String,
-    channel: Int,
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
     sleepInterval: Long,
-    lastSeenTimestamp: Long
-) : ShellyOutputPort<PowerLevel>(id, PowerLevel::class.java, sleepInterval, lastSeenTimestamp) {
+    lastSeenTimestamp: Long,
+    shellyId: String,
+    channel: Int
+) :
+    ShellyOutputPort<PowerLevel>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        PowerLevel::class.java,
+        PortCapabilities(canRead = true, canWrite = true),
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     private val gson = Gson()
     private var readValue = PowerLevel(BigDecimal.ZERO)
-    override var requestedValue : PowerLevel? = null
     override val readTopics = arrayOf("shellies/$shellyId/light/$channel/status")
     override val writeTopic = "shellies/$shellyId/light/$channel/set"
 
-    override fun read(): PowerLevel {
+    override fun readInternal(): PowerLevel {
         return readValue
-    }
-
-    override fun write(value: PowerLevel) {
-        requestedValue = value
     }
 
     override fun setValueFromMqttPayload(payload: String) {
@@ -67,19 +77,15 @@ class ShellyPowerLevelOutputPort(
             return null
         }
 
-        val response: LightSetDto = if (requestedValue!!.value == BigDecimal.ZERO) {
-            LightSetDto("off", 0)
-        } else {
-            LightSetDto("on", requestedValue!!.value.toInt())
-        }
+        val response: LightSetDto =
+            if (requestedValue!!.value == BigDecimal.ZERO) {
+                LightSetDto("off", 0)
+            } else {
+                LightSetDto("on", requestedValue!!.value.toInt())
+            }
 
-        requestedValue = null
+        reset()
 
         return gson.toJson(response)
-    }
-
-
-    override fun reset() {
-        requestedValue = null
     }
 }

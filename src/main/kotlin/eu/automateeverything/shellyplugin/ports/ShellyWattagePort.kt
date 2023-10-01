@@ -15,25 +15,41 @@
 
 package eu.automateeverything.shellyplugin.ports
 
+import eu.automateeverything.domain.events.EventBus
+import eu.automateeverything.domain.hardware.PortCapabilities
 import eu.automateeverything.domain.hardware.Wattage
 import java.math.BigDecimal
 
-class ShellyWattageInputPort(
-    id: String,
-    shellyId: String,
-    channel: Int,
+class ShellyWattagePort(
+    factoryId: String,
+    adapterId: String,
+    portId: String,
+    eventBus: EventBus,
     sleepInterval: Long,
-    lastSeenTimestamp: Long
-) : ShellyInputPort<Wattage>(id, Wattage::class.java, sleepInterval, lastSeenTimestamp) {
+    lastSeenTimestamp: Long,
+    shellyId: String,
+    channel: Int
+) :
+    ShellyPort<Wattage>(
+        factoryId,
+        adapterId,
+        portId,
+        eventBus,
+        Wattage::class.java,
+        PortCapabilities(canRead = true, canWrite = false),
+        sleepInterval,
+        lastSeenTimestamp
+    ) {
 
     private var value = Wattage(BigDecimal.ZERO)
 
-    override val readTopics = arrayOf(
-        "shellies/$shellyId/relay/$channel/power",
-        "shellies/$shellyId/light/$channel/power"
-    )
+    override val readTopics =
+        arrayOf(
+            "shellies/$shellyId/relay/$channel/power",
+            "shellies/$shellyId/light/$channel/power"
+        )
 
-    override fun read(): Wattage {
+    override fun readInternal(): Wattage {
         return value
     }
 
